@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Terapi Arkadaşın</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #e3a7ff, #ffb6c1);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #chat-container {
+            width: 420px;
+            height: 600px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #header {
+            background: #9b59b6;
+            color: #fff;
+            text-align: center;
+            padding: 12px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        #messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        .message {
+            margin-bottom: 12px;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+            line-height: 1.4;
+        }
+        .user {
+            background: #d1e7ff;
+            align-self: flex-end;
+        }
+        .bot {
+            background: #f5e6ff;
+            align-self: flex-start;
+        }
+        #input-container {
+            display: flex;
+            border-top: 1px solid #ddd;
+        }
+        #user-input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            outline: none;
+            font-size: 14px;
+        }
+        #send-btn {
+            padding: 10px 20px;
+            border: none;
+            background: #9b59b6;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #send-btn:hover {
+            background: #7d3c98;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="header">💜 Terapi Arkadaşın</div>
+        <div id="messages"></div>
+        <div id="input-container">
+            <input id="user-input" type="text" placeholder="Mesajını yaz..." />
+            <button id="send-btn">Gönder</button>
+        </div>
+    </div>
+
+    <script>
+        const messagesDiv = document.getElementById("messages");
+        const userInput = document.getElementById("user-input");
+        const sendBtn = document.getElementById("send-btn");
+        let sessionEnded = false;
+
+        function addMessage(text, sender) {
+            const div = document.createElement("div");
+            div.classList.add("message", sender);
+            div.textContent = text;
+            messagesDiv.appendChild(div);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        async function sendMessage() {
+            if (sessionEnded) {
+                addMessage("Seans sona erdi. Yeni bir seans başlatmak için sayfayı yenileyebilirsin.", "bot");
+                return;
+            }
+
+            const text = userInput.value.trim();
+            if (!text) return;
+            addMessage(text, "user");
+            userInput.value = "";
+
+            try {
+                const res = await fetch("/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: text })
+                });
+                const data = await res.json();
+                addMessage(data.reply, "bot");
+                if (data.end) {
+                    sessionEnded = true;
+                }
+            } catch (err) {
+                addMessage("Bağlantı hatası. Yeniden dener misin?", "bot");
+            }
+        }
+
+        sendBtn.addEventListener("click", sendMessage);
+        userInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendMessage();
+        });
+
+        // İlk selamlama
+        addMessage("Selam 👋 Ben Terapi Arkadaşın. Nasılsın bugün?", "bot");
+    </script>
+</body>
+</html>
